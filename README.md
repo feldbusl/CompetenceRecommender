@@ -17,7 +17,7 @@ git clone https://github.com/feldbusl/CompetenceRecommender.git
 Update and activate the plugin in the ILIAS Plugin Administration
 
 ### Dependencies (Already exists in `vendor`)
-* ILIAS 5.3
+* ILIAS 5.3 or 5.4 (depending on the branch you choose)
 * PHP >=7.0
 * [composer](https://getcomposer.org)
 * PHPUnit ^7
