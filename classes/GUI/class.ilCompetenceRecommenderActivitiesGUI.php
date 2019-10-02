@@ -123,7 +123,7 @@ class ilCompetenceRecommenderActivitiesGUI
 					$obj_id = ilObject::_lookupObjectId($object["id"]);
 					$link = $renderer->render($factory->link()->standard(ilObject::_lookupTitle($obj_id), ilLink::_getLink($object["id"])));
 					$image = $factory->image()->standard(ilObject::_getIcon($obj_id), "Icon");
-					$card = $factory->card($link, $image);
+					$card = $factory->card()->standard($link, $image);
 					array_push($resourcearray, $card);
 				}
 				$deck = $factory->deck($resourcearray);
@@ -158,7 +158,11 @@ class ilCompetenceRecommenderActivitiesGUI
 			$oldresourcearray = array();
 			$btpl = new ilTemplate("./Customizing/global/plugins/Services/UIComponent/UserInterfaceHook/CompetenceRecommender/templates/tpl.comprecBar.html", true, true);
 			$btpl->setVariable("TITLE", $competence["title"]);
-			$btpl->setVariable("ID", $competence["id"]);
+			if ($competence["id"] == 0) {$id = $competence["base_skill"];}
+			else {$id = $competence["id"];}
+			$btpl->setVariable("ID", $id);
+			$btpl->setVariable("EXISTSDATA", $competence["existsdata"]);
+			$btpl->setVariable("NODATAYET", $this->lng->txt('ui_uihk_comprec_zero_percent_no_data'));
 			$btpl->setVariable("SCORE", $score);
 			$btpl->setVariable("GOALAT", $goalat);
 			$btpl->setVariable("SCALE", $competence["scale"]);
@@ -177,7 +181,7 @@ class ilCompetenceRecommenderActivitiesGUI
 				$obj_id = ilObject::_lookupObjectId($resource["id"]);
 				$link = $renderer->render($factory->link()->standard(ilObject::_lookupTitle($obj_id), ilLink::_getLink($resource["id"])));
 				$image = $factory->image()->standard(ilObject::_getIcon($obj_id), "Icon");
-				$card = $factory->card($link, $image);
+				$card = $factory->card()->standard($link, $image);
 				if ($resource["level"] > $score) {
 					array_push($resourcearray, $card);
 				} else {

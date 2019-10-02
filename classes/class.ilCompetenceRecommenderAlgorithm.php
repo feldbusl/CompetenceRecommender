@@ -234,7 +234,7 @@ class ilCompetenceRecommenderAlgorithm {
 		$competences = self::getAllCompetencesOfUserProfile();
 
 		foreach ($competences as $competence) {
-			if ($competence["score"] < $competence["goal"] && $competence["score"] > 0) {
+			if ($competence["score"] < $competence["goal"] && $competence["existsdata"]) {
 				return false;
 			}
 		}
@@ -275,7 +275,7 @@ class ilCompetenceRecommenderAlgorithm {
 
 		foreach ($competences as $competence) {
 			foreach ($competence["resources"] as $resource) {
-				if ($resource["level"] > $competence["score"] && $competence["score"] < $competence["goal"] && $competence["score"] > 0) {
+				if ($resource["level"] > $competence["score"] && $competence["score"] < $competence["goal"] && $competence["existsdata"]) {
 					array_push($allRefIds, $resource);
 					break;
 				}
@@ -383,35 +383,40 @@ class ilCompetenceRecommenderAlgorithm {
 		else {$score = self::computeScore($skill["base_skill_id"], true);}
 		if ($n == 0 || ($score != 0 && $score < $goal["nr"])) {
 			if ($skill["tref_id"] == 0) {
+				//set everything a step down (-1) for that the percentage of the lowest step is 0%
 				$skillsToSort[$skill["base_skill_id"]] = array(
 					"id" => $skill["tref_id"],
 					"base_skill" => $skill["base_skill_id"],
 					"parent" => $parentId,
 					"title" => $skill['title'],
 					"lastUsed" => self::getLastUsedDate(intval($skill["base_skill_id"]),true),
-					"score" => $score,
-					"diff" => $score == 0 ? 1 - $goal["nr"] / $levelcount : $score / $goal["nr"],
-					"goal" => $goal["nr"],
-					"percentage" => $score / $goal["nr"],
-					"scale" => $levelcount,
+					"existsdata" => ($score != 0),
+					"score" => $score == 0 ? $score = 0 : $score = $score - 1,
+					"diff" => $score == 0 ? 1 - ($goal["nr"]-1) / ($levelcount-1) : ($score-1) / ($goal["nr"]-1),
+					"goal" => $goal["nr"] - 1,
+					"percentage" => ($score-1) / ($goal["nr"]-1),
+					"scale" => $levelcount-1,
 					"resources" => self::getResourcesForCompetence(intval($skill["base_skill_id"]), true));
 			} else if (!isset($skillsToSort[$skill["tref_id"]])) {
+				//set everything a step down (-1) for that the percentage of the lowest step is 0%
 				$skillsToSort[$skill["tref_id"]] = array(
 					"id" => $skill["tref_id"],
 					"base_skill" => $skill["base_skill_id"],
 					"parent" => $parentId,
 					"title" => $skill['title'],
 					"lastUsed" => self::getLastUsedDate(intval($skill["tref_id"])),
-					"score" => $score,
-					"diff" => $score == 0 ? 1 - $goal["nr"] / $levelcount : $score / $goal["nr"],
-					"goal" => $goal["nr"],
-					"percentage" => $score / $goal["nr"],
-					"scale" => $levelcount,
+					"existsdata" => ($score != 0),
+					"score" => $score == 0 ? $score = 0 : $score = $score - 1,
+					"diff" => $score == 0 ? 1 - ($goal["nr"]-1) / ($levelcount-1) : ($score-1) / ($goal["nr"]-1),
+					"goal" => $goal["nr"] - 1,
+					"percentage" => ($score-1) / ($goal["nr"]-1),
+					"scale" => $levelcount-1,
 					"resources" => self::getResourcesForCompetence(intval($skill["tref_id"])));
 			} else if ($goal["nr"] > $skillsToSort[$skill["tref_id"]]["goal"]) {
 				// if several profiles with same skill take maximum
-				$skillsToSort[$skill["tref_id"]]["goal"] = $goal["nr"];
-				$skillsToSort[$skill["tref_id"]]["percentage"] = $score / $goal["nr"];
+				$skillsToSort[$skill["tref_id"]]["goal"] = $goal["nr"]-1;
+				$skillsToSort[$skill["tref_id"]]["percentage"] = ($score-1) / ($goal["nr"]-1);
+				$skillsToSort[$skill["tref_id"]]["diff"] = ($score == 0 ? 1 - ($goal["nr"]-1) / ($levelcount-1) : ($score-1) / ($goal["nr"]-1));
 			}
 		}
 		return $skillsToSort;
@@ -619,7 +624,8 @@ class ilCompetenceRecommenderAlgorithm {
 								FROM skl_user_has_level AS suhl
 								JOIN skl_level AS sl ON suhl.level_id = sl.id
 								WHERE suhl.user_id ='" . $user_id . "' 
-								AND suhl.".$use_id." ='" . $skill_id . "'");
+								AND suhl.".$use_id." ='" . $skill_id . "'
+								ORDER BY suhl.status_date DESC");
 
 		$date = $lastUsedDate->fetchAssoc()["status_date"];
 		if (!isset($date)) {
@@ -660,7 +666,7 @@ class ilCompetenceRecommenderAlgorithm {
 								WHERE id ='".$value["level_id"]."'");
 			$levelnumber = $level->fetchAssoc();
 			if ($access->checkAccessOfUser($user, 'read', $value["rep_ref_id"])) {
-				array_push($refIds, array("id" => $value["rep_ref_id"], "title" => $value["title"], "level" => $levelnumber["nr"]));
+				array_push($refIds, array("id" => $value["rep_ref_id"], "title" => $value["title"], "level" => ($levelnumber["nr"]-1)));
 			}
 		}
 
